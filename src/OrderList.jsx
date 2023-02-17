@@ -8,7 +8,7 @@ import 'primeicons/primeicons.css';
 import { order } from './assets/JSON/json';
 import { useNavigate } from 'react-router-dom';
 
-const OrderList = ({ technicians, setTechnicians, data, setData }) => {
+const OrderList = ({ technicians, setTechnicians, data, setData , setDummyTechnicians ,dummyTechnicians}) => {
     let navigate = useNavigate();
 
     /* Table Code Start */
@@ -103,7 +103,8 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
                  * Checking if already processed or not
                  */
                 if (!technicians[element.id].leave &&
-                    technicians[element.id].trained == orderDetails.serviceOn //&&
+                    technicians[element.id].trained == orderDetails.serviceOn && calculateWorkingHours(technicians[element.id], orderDetails)
+                        
                     //!orderDetails.processed//&& 
                     // technicians[element.id].workingHours < technicians[element.id].workedHours | 0
                 ) {
@@ -112,6 +113,8 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
                 }
 
             });
+
+           
 
             //getDistance.findIndex(item => item.duration.value === minDuration);
             const closestTechnician = technicians[closestTechnicianIndex];
@@ -124,6 +127,14 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
         });
     };
 
+    const calculateWorkingHours = (technician,orderDetails) => {
+        console.log('================technician.orders====================');
+        console.log(technician.orders);
+        console.log('====================================');
+        technician.orders
+        return true;
+    }
+
     const process = async () => {
         setLoader(true);
         for (const orderItem of order) {
@@ -134,7 +145,6 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
             } catch (error) {
                 setLoader(false);
             }
-
         }
         navigate('/TechnicianSchedule');
     };
