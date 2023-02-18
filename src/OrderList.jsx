@@ -8,13 +8,14 @@ import 'primeicons/primeicons.css';
 import { order } from './assets/JSON/json';
 import { useNavigate } from 'react-router-dom';
 
-const OrderList = ({ technicians, setTechnicians, data, setData , setDummyTechnicians ,dummyTechnicians}) => {
+const OrderList = ({ technicians, setTechnicians, data, setData }) => {
     let navigate = useNavigate();
 
     /* Table Code Start */
 
     const [loading, setLoader] = useState(false);
     const [filter, setFilter] = useState('');
+    var tempTechnicians = technicians;
     const handleFilter = (e) => {
         setFilter(e.target.value);
     };
@@ -36,27 +37,30 @@ const OrderList = ({ technicians, setTechnicians, data, setData , setDummyTechni
 
     /* Table Code End */
 
-
     const handleUpdateTechnicianOrders = (id, newOrder) => {
-        setTechnicians(technicians => {
-            return technicians.map(technician => {
-                if (technician.id === id) {
-                    return { ...technician, orders: [...technician.orders, newOrder] };
-                }
-                return technician;
-            });
+        //setTechnicians(technicians => {
+        var orders = tempTechnicians.map(technician => {
+            if (technician.id === id) {
+                return { ...technician, orders: [...technician.orders, newOrder] };
+            }
+            return technician;
         });
+        tempTechnicians = orders;
+        console.log(orders, tempTechnicians);
+        //});
     };
 
     const handleUpdateTechnicianLocation = (id, newlocation) => {
-        setTechnicians(technicians => {
-            return technicians.map(technician => {
-                if (technician.id === id) {
-                    return { ...technician, location: newlocation[0] };
-                }
-                return technician;
-            });
+        //setTechnicians(technicians => {
+        var location = tempTechnicians.map(technician => {
+            if (technician.id === id) {
+                return { ...technician, location: newlocation[0] };
+            }
+            return technician;
         });
+        tempTechnicians = location;
+        //console.log(location, tempTechnicians);
+        // });
     };
 
 
@@ -86,8 +90,11 @@ const OrderList = ({ technicians, setTechnicians, data, setData , setDummyTechni
             avoidTolls: false,
         };
 
+      
+
         await service.getDistanceMatrix(request).then((response) => {
             const getDistance = response.rows[0].elements;
+            
             getDistance.map((a, b) => a['id'] = b);
             getDistance.sort(function (a, b) {
                 return a.duration.value - b.duration.value;
@@ -102,9 +109,9 @@ const OrderList = ({ technicians, setTechnicians, data, setData , setDummyTechni
                  * Checking total Working Hours
                  * Checking if already processed or not
                  */
-                if (!technicians[element.id].leave &&
-                    technicians[element.id].trained == orderDetails.serviceOn && calculateWorkingHours(technicians[element.id], orderDetails)
-                        
+                if (!tempTechnicians[element.id].leave &&
+                    tempTechnicians[element.id].trained == orderDetails.serviceOn && calculateWorkingHours(tempTechnicians[element.id], orderDetails)
+
                     //!orderDetails.processed//&& 
                     // technicians[element.id].workingHours < technicians[element.id].workedHours | 0
                 ) {
@@ -114,23 +121,23 @@ const OrderList = ({ technicians, setTechnicians, data, setData , setDummyTechni
 
             });
 
-           
+
 
             //getDistance.findIndex(item => item.duration.value === minDuration);
-            const closestTechnician = technicians[closestTechnicianIndex];
+            const closestTechnician = tempTechnicians[closestTechnicianIndex];
             if (!closestTechnician.orders.includes({ "distanceDetails": getDistance[closestTechnicianIndex], "order": orderDetails })) {
                 handleUpdateTechnicianOrders(closestTechnician.id, { "distanceDetails": getDistance[closestTechnicianIndex], "order": orderDetails });
-                handleUpdateTechnicianLocation(closestTechnician.id, orderLocation);
+                //handleUpdateTechnicianLocation(closestTechnician.id, orderLocation);
                 handleUpdateorders(orderDetails.id);
                 filteredData('');
             }
         });
     };
 
-    const calculateWorkingHours = (technician,orderDetails) => {
-        console.log('================technician.orders====================');
-        console.log(technician.orders);
-        console.log('====================================');
+    const calculateWorkingHours = (technician, orderDetails) => {
+        //console.log('================technician.orders====================');
+        //console.log(technician.orders);
+        //console.log('====================================');
         technician.orders
         return true;
     }
@@ -138,17 +145,27 @@ const OrderList = ({ technicians, setTechnicians, data, setData , setDummyTechni
     const process = async () => {
         setLoader(true);
         for (const orderItem of order) {
-            const employeeLocations = technicians.map(technician => technician.location);
+            const employeeLocations = tempTechnicians.map(technician => {
+                if (technician.orders.length)
+                    return technician.orders[technician.orders.length-1].order.location
+               else
+                    return technician.location
+            });
             const orderLocation = [orderItem.location];
             try {
+                //console.log("orderLocation",orderLocation);
+                console.log("no",employeeLocations);
                 await initMap(orderLocation, employeeLocations, orderItem);
             } catch (error) {
                 setLoader(false);
             }
         }
+        console.log('=============tempTechnicians=======================');
+        console.log(tempTechnicians);
+        console.log('====================================');
+        setTechnicians(tempTechnicians);
         navigate('/TechnicianSchedule');
     };
-
 
     return (
         <div className="rounded-md relative w-full shadow-2xl bg-white mx-5">
