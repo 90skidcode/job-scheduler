@@ -46,7 +46,7 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
             return technician;
         });
         tempTechnicians = orders;
-        console.log(orders, tempTechnicians);
+        //console.log(orders, tempTechnicians);
         //});
     };
 
@@ -75,6 +75,31 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
         });
     };
 
+    const calculateWorkingHours = (technician, orderDetails) => {
+        var time = 0;
+        var drivingTime = 0;
+        // technician total working time for the day
+        var technicianWorkingTime = (parseFloat(technician.workingHours) * 60) * 60;
+
+        // technician total driving time for the day
+        var technicianDrivingTime = (parseFloat(technician.drivingTime) * 60) * 60;
+
+        // Add current order time
+        time = (parseFloat(orderDetails.TimeToComplete) * 60) * 60;
+
+        // Adding already asiggned time
+        technician.orders.map(i => {
+            time += i.distanceDetails.duration.value;
+            time += (parseFloat(i.order.TimeToComplete) * 60) * 60;
+            drivingTime += i.distanceDetails.duration.value;
+        });
+
+        if (time <= technicianWorkingTime)
+            return true;
+        else
+            return false;
+
+    }
 
 
     const initMap = async (orderLocation, employeeLocation, orderDetails) => {
@@ -90,43 +115,47 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
             avoidTolls: false,
         };
 
-      
 
         await service.getDistanceMatrix(request).then((response) => {
             const getDistance = response.rows[0].elements;
-            
             getDistance.map((a, b) => a['id'] = b);
             getDistance.sort(function (a, b) {
                 return a.duration.value - b.duration.value;
             });
+
             //const minDuration = Math.min(...getDistance.map(item => item.duration.value));
             var closestTechnicianIndex = null;
+            var distanceDetails = '';
             getDistance.forEach(element => {
-
                 /**
                  * Checking Leave
                  * Checking Trained Company
                  * Checking total Working Hours
                  * Checking if already processed or not
                  */
-                if (!tempTechnicians[element.id].leave &&
-                    tempTechnicians[element.id].trained == orderDetails.serviceOn && calculateWorkingHours(tempTechnicians[element.id], orderDetails)
+
+                if (closestTechnicianIndex == null && !tempTechnicians[element.id].leave &&
+                    tempTechnicians[element.id].trained == orderDetails.serviceOn
 
                     //!orderDetails.processed//&& 
                     // technicians[element.id].workingHours < technicians[element.id].workedHours | 0
                 ) {
-                    closestTechnicianIndex = element.id;
-                    return false;
+                    console.log(tempTechnicians[element.id].name, orderDetails.name);
+                    if (calculateWorkingHours(tempTechnicians[element.id], orderDetails)) {
+                        closestTechnicianIndex = element.id;
+                        distanceDetails = element;
+                        console.log(">>>>>>>>>>> ", orderDetails.name, " =========== ", tempTechnicians[element.id].name);
+                    }
                 }
-
             });
 
 
 
             //getDistance.findIndex(item => item.duration.value === minDuration);
             const closestTechnician = tempTechnicians[closestTechnicianIndex];
-            if (!closestTechnician.orders.includes({ "distanceDetails": getDistance[closestTechnicianIndex], "order": orderDetails })) {
-                handleUpdateTechnicianOrders(closestTechnician.id, { "distanceDetails": getDistance[closestTechnicianIndex], "order": orderDetails });
+            console.log("closestTechnicianIndex >>>", closestTechnicianIndex);
+            if (!closestTechnician.orders.includes({ "distanceDetails": distanceDetails, "order": orderDetails })) {
+                handleUpdateTechnicianOrders(closestTechnician.id, { "distanceDetails": distanceDetails, "order": orderDetails });
                 //handleUpdateTechnicianLocation(closestTechnician.id, orderLocation);
                 handleUpdateorders(orderDetails.id);
                 filteredData('');
@@ -134,35 +163,27 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
         });
     };
 
-    const calculateWorkingHours = (technician, orderDetails) => {
-        //console.log('================technician.orders====================');
-        //console.log(technician.orders);
-        //console.log('====================================');
-        technician.orders
-        return true;
-    }
+
 
     const process = async () => {
         setLoader(true);
         for (const orderItem of order) {
+            console.log(tempTechnicians);
             const employeeLocations = tempTechnicians.map(technician => {
                 if (technician.orders.length)
-                    return technician.orders[technician.orders.length-1].order.location
-               else
+                    return technician.orders[technician.orders.length - 1].order.location
+                else
                     return technician.location
             });
             const orderLocation = [orderItem.location];
             try {
-                //console.log("orderLocation",orderLocation);
-                console.log("no",employeeLocations);
+                console.log(employeeLocations,orderItem);
                 await initMap(orderLocation, employeeLocations, orderItem);
             } catch (error) {
                 setLoader(false);
             }
         }
-        console.log('=============tempTechnicians=======================');
-        console.log(tempTechnicians);
-        console.log('====================================');
+
         setTechnicians(tempTechnicians);
         navigate('/TechnicianSchedule');
     };
