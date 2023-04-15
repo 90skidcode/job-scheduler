@@ -1,8 +1,6 @@
 import React from 'react'
 
 export default function TechnicianSchedule({ technicians }) {
-
-
     const GetRoute = (technician) => {
         var url = 'https://www.google.com/maps/dir/'
         var location = technician.location.lat + ',' + technician.location.lng + "/";

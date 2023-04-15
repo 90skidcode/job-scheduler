@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import NavBar from './NavBar';
-import OrderList from './orderList';
 import { employee, order } from './assets/JSON/json';
 import TechnicianSchedule from './TechnicianSchedule';
+import OrderList from './OrderList';
+
 const App = () => {
   const [technicians, setTechnicians] = useState(employee);
   const [data, setData] = useState(order);

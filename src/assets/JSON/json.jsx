@@ -53,12 +53,20 @@ export const order = [{
     "id": 1,
     "name": "Customer 1",
     "serviceOn": "Hyundai",
-    "TimeToComplete": 11,
+    "TimeToComplete": 4,
     "processed": false,
     "location": {
         "lat": 11.445157,
         "lng": 77.724629
+    },
+    date: {
+        'year': '2023',
+        'month': [4],
+        'week': [3],
+        'days': [3, 5],
+        'time':[8,9,10,11,12,13,14]
     }
+
 }, {
     "id": 2,
     "name": "Customer 2",
@@ -68,6 +76,13 @@ export const order = [{
     "location": {
         "lat": 11.343280,
         "lng": 77.728451
+    },
+    date: {
+        'year': '2023',
+        'month': [4],
+        'week': [4],
+        'days': [3, 6],
+        'time':[11,12,13,14,15,16,17]
     }
 }, {
     "id": 3,
@@ -78,6 +93,13 @@ export const order = [{
     "location": {
         "lat": 11.455204,
         "lng": 77.815336
+    },
+    date: {
+        'year': '2023',
+        'month': [4],
+        'week': [4],
+        'days': [3, 6],
+        'time':[8,9,10,11,12,13,14]
     }
 
 }, {
@@ -89,6 +111,13 @@ export const order = [{
     "location": {
         "lat": 11.416670,
         "lng": 77.727128
+    },
+    date: {
+        'year': '2023',
+        'month': [4],
+        'week': [2],
+        'days': [3, 6],
+        'time':[8,9,10,11,12,13,14]
     }
     // }, {
     //     "id": 5,
