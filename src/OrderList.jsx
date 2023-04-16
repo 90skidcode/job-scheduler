@@ -129,13 +129,10 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
       var closestTechnicianIndex = null;
       var distanceDetails = '';
       getDistance.forEach(element => {
-
-        if (closestTechnicianIndex == null && calculateWorkingHours(filtredTechnicians[element.id], orderDetails) && !findIsthatTimeIsFree(filtredTechnicians[element.id], orderDetails,element)) {
+        if (closestTechnicianIndex == null && calculateWorkingHours(filtredTechnicians[element.id], orderDetails) && findIsthatTimeIsFree(filtredTechnicians[element.id], orderDetails,element)) {
           closestTechnicianIndex = element.id;
           distanceDetails = element;
-
         }
-
       });
 
 
@@ -154,10 +151,9 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
   const findIsthatTimeIsFree = (technician, orderDetails, distanceDetails) => {
     const startTime = moment(orderDetails.startTime).subtract(distanceDetails.duration.value, 'seconds').format();
     const endTime = moment(orderDetails.startTime).add(orderDetails.TimeToComplete, 'hours').add((((distanceDetails.duration.value+((orderDetails.TimeToComplete *60)*60))/7200)*900),'seconds').format();
-   
-    if (technician.orders.length) {
-        const flag = technician.orders.map(element => {
-            console.log([startTime, endTime], [element.eventTime.startTime, element.eventTime.endTime]);
+   var tech = tempTechnicians.filter(i=> i.id == technician.id)[0];
+    if (tech.orders.length) {
+        const flag = tech.orders.map(element => {
             return areTimeRangesOverlapping([startTime, endTime], [element.eventTime.startTime, element.eventTime.endTime]);
         });
         return flag.filter(element => element).length ? false : true;
@@ -283,25 +279,19 @@ function areTimeRangesOverlapping(time1, time2) {
             var allStartTime = technician.orders.map(i =>{
               return i.order.startTime
             })
-            locationData = technician.orders[findClosestTimeIndex(allStartTime,orderItem.startTime)].location
+            locationData = technician.orders[findClosestTimeIndex(allStartTime,orderItem.startTime)].order.location
           })
         }
         else
           locationData = technician.location
-
         order[index].startTime = i.startTime;
         order[index].endTime = i.endTime;
       }
-
-
     })
-
     return locationData;
   }
 
-
   function findClosestTimeIndex(times, targetTime){
-
     let closestIndex = 0;
     let closestDiff = Math.abs(moment(times[0]).diff(moment(targetTime)));
     
@@ -344,6 +334,9 @@ function areTimeRangesOverlapping(time1, time2) {
       });
       const orderLocation = [orderItem.location];
       try {
+        console.log('================employeeLocations====================');
+        console.log(employeeLocations);
+        console.log('====================================');
         const empLocation = employeeLocations.filter(item => item !== undefined && item !== "");
         if (empLocation.length)
           await initMap(orderLocation, empLocation, orderItem);
@@ -357,7 +350,7 @@ function areTimeRangesOverlapping(time1, time2) {
     console.log('====================================');
     console.log(tempTechnicians);
     console.log('====================================');
-   // navigate('/TechnicianSchedule');
+   navigate('/TechnicianSchedule');
   };
 
   return (

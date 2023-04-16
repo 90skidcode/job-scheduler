@@ -24,3 +24,11 @@
   flex-wrap: wrap;
   align-content: center;
 }
+
+.fc-license-message{
+  display: none;
+}
+
+.fc-resizer.fc-end-resizer {
+  display: none;
+}

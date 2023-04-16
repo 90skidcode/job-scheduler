@@ -1,6 +1,6 @@
 export const employee = [{
     "id": 1,
-    "name": "Technician 1",
+    "title": "Technician 1",
     "trained": "Hyundai",
     "workingHours": 14,
     "location": {
@@ -12,7 +12,7 @@ export const employee = [{
     "orders": []
 }, {
     "id": 2,
-    "name": "Technician 2",
+    "title": "Technician 2",
     "trained": "Hyundai",
     "workingHours": 14,
     "location": {
@@ -24,7 +24,7 @@ export const employee = [{
     "orders": []
 }, {
     "id": 3,
-    "name": "Technician 3",
+    "title": "Technician 3",
     "trained": "Ford",
     "workingHours": 14,
     "location": {
@@ -36,7 +36,7 @@ export const employee = [{
     "orders": []
 }, {
     "id": 4,
-    "name": "Technician 4",
+    "title": "Technician 4",
     "trained": "Tata",
     "workingHours": 14,
     "location": {
@@ -53,7 +53,7 @@ export const order = [{
     "id": 1,
     "name": "Customer 1",
     "serviceOn": "Hyundai",
-    "TimeToComplete": 4,
+    "TimeToComplete": 1,
     "processed": false,
     "location": {
         "lat": 11.445157,
@@ -62,16 +62,15 @@ export const order = [{
     date: {
         'year': '2023',
         'month': [4],
-        'week': [3],
-        'days': [3, 5],
+        'week': [4],
+        'days': [0],
         'time':[8,9,10,11,12,13,14]
     }
-
 }, {
     "id": 2,
     "name": "Customer 2",
     "serviceOn": "Hyundai",
-    "TimeToComplete": 4,
+    "TimeToComplete": 1,
     "processed": false,
     "location": {
         "lat": 11.343280,
@@ -81,14 +80,14 @@ export const order = [{
         'year': '2023',
         'month': [4],
         'week': [4],
-        'days': [3, 6],
-        'time':[11,12,13,14,15,16,17]
+        'days': [0],
+        'time':[14,15,16,17]
     }
 }, {
     "id": 3,
     "name": "Customer 3",
     "serviceOn": "Hyundai",
-    "TimeToComplete": 4,
+    "TimeToComplete": 1,
     "processed": false,
     "location": {
         "lat": 11.455204,
@@ -98,7 +97,7 @@ export const order = [{
         'year': '2023',
         'month': [4],
         'week': [4],
-        'days': [3, 6],
+        'days': [0],
         'time':[8,9,10,11,12,13,14]
     }
 
@@ -123,7 +122,7 @@ export const order = [{
     //     "id": 5,
     //     "name": "Customer 5",
     //     "serviceOn": "Tata",
-    //     "TimeToComplete": 4, 
+    //     "TimeToComplete": 1, 
     //     "processed": false,
     //     "location": {
     //         "lat": 9.693004,
@@ -153,7 +152,7 @@ export const order = [{
     //     "id": 8,
     //     "name": "Customer 8",
     //     "serviceOn": "Ford",
-    //     "TimeToComplete": 4, 
+    //     "TimeToComplete": 1, 
     //     "processed": false,
     //     "location": {
     //         "lat": 10.539119,
