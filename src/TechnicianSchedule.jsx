@@ -1,18 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
-import interactionPlugin from '@fullcalendar/interaction';
+import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
 import moment from 'moment';
 import { beforeAndAfterIndex, calculateStartTime, calculateWorkingHours, calculateWorkingHoursBeforeApiCall, findClosestTimeIndex, findIsthatTimeIsFree } from './CommonUtilsFunctions';
 
-function TechnicianSchedule({ technicians, setTechnicians }) {
-
+function TechnicianSchedule({ technicians, setTechnicians, data, setData }) {
+    const calendarRef = useRef(null);
     const [events, setEvents] = useState([]);
     var tempTech = technicians;
     useEffect(() => {
         rerenderCalander();
+
     }, [technicians])
+
+    useEffect(() => {
+        const draggableEl = document.getElementById("external-events");
+        const draggable = new Draggable(draggableEl, {
+            itemSelector: ".fc-event",
+            eventData: function (eventEl) {
+                const title = eventEl.getAttribute("title");
+                const id = eventEl.getAttribute("data");
+                return {
+                    title: title,
+                    id: id
+                };
+            }
+        });
+
+        return () => {
+            draggable.destroy();
+        };
+    }, []);
+
+
 
     function rerenderCalander() {
         var eventsList = [];
@@ -34,7 +56,10 @@ function TechnicianSchedule({ technicians, setTechnicians }) {
                             end: order.eventTime.endTime,
                             resourceId: technician.id,
                             extendedProps: {
-                                description: order.order.name + ">>",
+                                drivingTime: order.distanceDetails.duration.text,
+                                drivingDistance: order.distanceDetails.distance.text,
+                                TimeToComplete: order.order.TimeToComplete
+                                
                             }
                         })
                     }
@@ -50,8 +75,12 @@ function TechnicianSchedule({ technicians, setTechnicians }) {
         // console.log('====================================');
         return (
             <>
-                <b>{eventInfo.event._def.extendedProps.description}</b>
-                <i>{eventInfo.event.title}</i>
+                <div className='text-center'>{eventInfo.event.title}</div>
+                <div className='bg-blue-400 p-1'>
+                    <div className='text-xs'>Driving Time : {eventInfo.event.extendedProps.drivingTime}</div>
+                    <div className='text-xs'>Driving Distance : {eventInfo.event.extendedProps.drivingDistance}</div>
+                    <div className='text-xs'>Job hours : {eventInfo.event.extendedProps.TimeToComplete}</div>
+                </div>
             </>
         );
     }
@@ -63,17 +92,13 @@ function TechnicianSchedule({ technicians, setTechnicians }) {
         const newResourceId = newResource?.id;
         var newStartTime = event.start?.toISOString();
         const orderID = event.id;
-        console.log('Old Resource ID:', oldResourceId);
-        console.log('New Resource ID:', newResourceId);
-        console.log('New Start Time:', newStartTime, event.id);
         newStartTime = moment(newStartTime).utcOffset('+05:30').format();
         if (!oldResourceId) {
-
+            updateOrders(orderID, event._def.resourceIds[0], newStartTime, event._def.resourceIds[0], eventDropInfo)
         } else {
             removeOrder(orderID, oldResourceId);
             updateOrders(orderID, newResourceId, newStartTime, oldResourceId, eventDropInfo)
         }
-
     };
 
     function removeOrder(orderID, oldResourceId) {
@@ -90,6 +115,33 @@ function TechnicianSchedule({ technicians, setTechnicians }) {
         tempTech = updatedTechnicians;
     }
 
+    function updateEvent(info) {
+
+        var newStartTime = info.event.start?.toISOString();
+        var currentOrder = data.filter(order => order.id == info.event.id)
+        const currentTech = technicians.filter(i => i.id == info.event._def.resourceIds[0]);
+
+        if (!currentTech[0].leave &&
+            currentTech[0].trained == currentOrder[0].serviceOn &&
+            calculateWorkingHoursBeforeApiCall(currentTech[0], currentOrder[0])// technician?.workedHours | 0
+        ) {
+            var allStartTime = currentTech[0].orders.map(i => {
+                return i.order.startTime
+            })
+
+            var { beforeIndex, afterIndex } = beforeAndAfterIndex(allStartTime, newStartTime);
+            var locationDataBefore = currentTech[0].orders[beforeIndex]?.order?.location
+            var orderDataAfter = currentTech[0].orders[afterIndex]?.order;
+            if (!locationDataBefore) {
+                locationDataBefore = currentTech[0].location;
+            }
+            initMap(locationDataBefore, currentOrder[0].location, currentOrder[0], currentTech[0], newStartTime, orderDataAfter, true);
+        } else {
+            info.revert();
+        }
+
+    }
+
 
     function updateOrders(orderID, newResourceId, newStartTime, oldResourceId, eventDropInfo) {
 
@@ -97,7 +149,9 @@ function TechnicianSchedule({ technicians, setTechnicians }) {
         // const currentMoment = moment();
         const currentTech = technicians.filter(i => i.id == newResourceId);
         const oldTech = technicians.filter(i => i.id == oldResourceId);
-        const currentOrder = oldTech[0].orders.filter((order) => order.order.id == orderID);
+        var currentOrder = oldTech[0].orders.filter((order) => order.order.id == orderID);
+
+
 
         if (!currentTech[0].leave &&
             currentTech[0].trained == currentOrder[0].order.serviceOn &&
@@ -119,6 +173,19 @@ function TechnicianSchedule({ technicians, setTechnicians }) {
         }
 
     }
+
+
+    const handleUpdateorders = (id) => {
+        setData(orders => {
+          return orders.map(order => {
+            if (order.id === id) {
+              return { ...order, processed: true };
+            }
+            return order;
+          });
+        });
+      };
+    
 
     const initMap = async (employeeLocation, orderLocation, orderDetails, tech, newStartTime, orderDataAfter, type) => {
         const geocoder = new google.maps.Geocoder();
@@ -144,7 +211,7 @@ function TechnicianSchedule({ technicians, setTechnicians }) {
                     }
 
                     handleUpdateTechnicianOrders(tech.id, { "distanceDetails": getDistance, "order": orderDetails, eventTime: calculateStartTime(orderDetails, getDistance, newStartTime) });
-
+                    handleUpdateorders(orderDetails.id);
 
                     if (orderDataAfter) {
                         var utech = tempTech.filter(i => i.id == tech.id);
@@ -156,6 +223,7 @@ function TechnicianSchedule({ technicians, setTechnicians }) {
 
                 } else {
                     handleUpdateTechnicianOrders(tech.id, { "distanceDetails": getDistance, "order": orderDetails, eventTime: calculateStartTime(orderDetails, getDistance) });
+                    handleUpdateorders(orderDetails.id);
                 }
 
                 setTechnicians(tempTech)
@@ -185,32 +253,58 @@ function TechnicianSchedule({ technicians, setTechnicians }) {
 
 
     return (
-        <div className="w-screen m-5">
-            <FullCalendar
-                plugins={[timeGridPlugin, resourceTimelinePlugin, interactionPlugin]}
-                initialView="resourceTimelineDay"
-                resources={technicians}
-                events={events}
-                headerToolbar={{
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth'
-                }}
-                slotDuration="00:15:00"
-                nowIndicator={true}
-                editable={true}
-                selectable={true}
-                selectMirror={true}
-                dayMaxEvents={true}
-                allDaySlot={false}
-                eventClick={(event) => alert(event.event.title)}
-                eventAdd={(event) => setEvents([...events, event.event.toPlainObject()])}
-                resourceLabelText="technician"
-                resourceAreaWidth="15%"
-                startEditable={false}
-                eventContent={renderEventContent}
-                eventDrop={handleEventDrop}
-            />
+        <div className="w-screen m-5 flex  gap-3">
+            <div className='w-5/6'>
+                <FullCalendar
+                    plugins={[timeGridPlugin, resourceTimelinePlugin, interactionPlugin]}
+                    initialView="resourceTimelineDay"
+                    resources={technicians}
+                    events={events}
+                    headerToolbar={{
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth'
+                    }}
+                    slotDuration="00:15:00"
+                    nowIndicator={true}
+                    editable={true}
+                    selectable={true}
+                    selectMirror={true}
+                    dayMaxEvents={true}
+                    allDaySlot={false}
+                    eventClick={(event) => alert(event.event.title)}
+                    eventAdd={(event) => setEvents([...events, event.event.toPlainObject()])}
+                    resourceLabelText="technician"
+                    resourceAreaWidth="15%"
+                    startEditable={false}
+                    eventContent={renderEventContent}
+                    eventDrop={handleEventDrop}
+
+                    eventReceive={updateEvent}
+                    ref={calendarRef}
+                />
+            </div>
+            <div
+                id="external-events"
+                className='w-1/6 p-2 shadow-sm bg-white rounded-md'
+            >
+                <p align="center">
+                    <strong> Orders</strong>
+                </p>
+                {data.map(event => (
+                    !event.processed ?
+                        <div
+                            className="fc-event shadow-sm text-center bg-blue-500 rounded-sm text-white m-3 cursor-pointer"
+                            title={event.name}
+                            data={event.id}
+                            key={event.id}
+                        >
+                            {event.name}
+                        </div>
+                        : ''
+                ))}
+                
+            </div>
         </div>
     );
 }

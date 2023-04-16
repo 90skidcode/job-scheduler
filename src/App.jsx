@@ -14,7 +14,7 @@ const App = () => {
       <Route exact path="/" element={<OrderList technicians={technicians}
         setTechnicians={setTechnicians}
         data={data} setData={setData} />} />
-      <Route exact path="/TechnicianSchedule" element={<TechnicianSchedule technicians={technicians} setTechnicians={setTechnicians} />} />
+      <Route exact path="/TechnicianSchedule" element={<TechnicianSchedule technicians={technicians} setTechnicians={setTechnicians} data={data} setData={setData} />} />
     </Routes>
   </div>
   );
