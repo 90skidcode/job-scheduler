@@ -9,7 +9,7 @@ import { order } from './assets/JSON/json';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import TechnicianSchedule from './TechnicianSchedule';
-import { calculateWorkingHoursBeforeApiCall, findClosestTimeIndex } from './CommonUtilsFunctions';
+import { calculateStartTime, calculateWorkingHours, calculateWorkingHoursBeforeApiCall, findClosestTimeIndex, findIsthatTimeIsFree } from './CommonUtilsFunctions';
 const OrderList = ({ technicians, setTechnicians, data, setData }) => {
   let navigate = useNavigate();
 
@@ -78,31 +78,7 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
     });
   };
 
-  const calculateWorkingHours = (technician, orderDetails) => {
-    var time = 0;
-    var drivingTime = 0;
-    // technician total working time for the day
-    var technicianWorkingTime = (parseFloat(technician.workingHours) * 60) * 60;
 
-    // technician total driving time for the day
-    var technicianDrivingTime = (parseFloat(technician.drivingTime) * 60) * 60;
-
-    // Add current order time
-    time = (parseFloat(orderDetails.TimeToComplete) * 60) * 60;
-
-    // Adding already asiggned time
-    technician.orders.map(i => {
-      time += i.distanceDetails.duration.value;
-      time += (parseFloat(i.order.TimeToComplete) * 60) * 60;
-      drivingTime += i.distanceDetails.duration.value;
-    });
-
-    if (time <= technicianWorkingTime)
-      return true;
-    else
-      return false;
-
-  }
 
 
   const initMap = async (orderLocation, employeeLocation, orderDetails) => {
@@ -148,44 +124,6 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
       }
     });
   };
-
-  const findIsthatTimeIsFree = (technician, orderDetails, distanceDetails) => {
-    const startTime = moment(orderDetails.startTime).subtract(distanceDetails.duration.value, 'seconds').format();
-    const endTime = moment(orderDetails.startTime).add(orderDetails.TimeToComplete, 'hours').add((((distanceDetails.duration.value+((orderDetails.TimeToComplete *60)*60))/7200)*900),'seconds').format();
-   var tech = tempTechnicians.filter(i=> i.id == technician.id)[0];
-    if (tech.orders.length) {
-        const flag = tech.orders.map(element => {
-            return areTimeRangesOverlapping([startTime, endTime], [element.eventTime.startTime, element.eventTime.endTime]);
-        });
-        return flag.filter(element => element).length ? false : true;
-    } else
-        return true
-
-}
-
-function areTimeRangesOverlapping(time1, time2) {
-  const start1 = new Date(time1[0]);
-  const end1 = new Date(time1[1]);
-  const start2 = new Date(time2[0]);
-  const end2 = new Date(time2[1]);
-
-  for (let i = 0; i < 1; i++) {
-    if (start1 < end2 && end1 > start2) {
-      return true; // time ranges are overlapping
-    }
-    else {
-      break; // time ranges are not overlapping, exit the loop
-    }
-  }
-
-  return false; // time ranges are not overlapping
-}
-
-  function calculateStartTime(orderDetails, distanceDetails) {
-    const startTime = moment(orderDetails.startTime).subtract(distanceDetails.duration.value, 'seconds').format();
-    const endTime = moment(orderDetails.startTime).add(orderDetails.TimeToComplete, 'hours').add((((distanceDetails.duration.value+((orderDetails.TimeToComplete *60)*60))/7200)*900),'seconds').format();
-    return {startTime: startTime , endTime:endTime};
-  }
 
 
   function getScheduleByMonthWeekDaysTime(data) {
@@ -240,12 +178,8 @@ function areTimeRangesOverlapping(time1, time2) {
     }
   }
 
-
-
-
-
+  
   function findLastLocation(technician, orderItem, index) {
-
     var locationData = '';
     var orderFlag = false;
     orderItem.exactDate.map(i => {
@@ -305,7 +239,7 @@ function areTimeRangesOverlapping(time1, time2) {
         console.log('====================================');
         const empLocation = employeeLocations.filter(item => item !== undefined && item !== "");
         if (empLocation.length)
-          await initMap(orderLocation, empLocation, orderItem);
+          await initMap(orderLocation, empLocation, orderItem );
       } catch (error) {
         setLoader(false);
       }
