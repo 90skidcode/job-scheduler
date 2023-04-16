@@ -9,10 +9,10 @@ import { beforeAndAfterIndex, calculateStartTime, calculateWorkingHours, calcula
 function TechnicianSchedule({ technicians, setTechnicians, data, setData }) {
     const calendarRef = useRef(null);
     const [events, setEvents] = useState([]);
+    
     var tempTech = technicians;
     useEffect(() => {
         rerenderCalander();
-
     }, [technicians])
 
     useEffect(() => {
@@ -38,10 +38,7 @@ function TechnicianSchedule({ technicians, setTechnicians, data, setData }) {
 
     function rerenderCalander() {
         var eventsList = [];
-        console.log('===========technicianstechnicianstechnicianstechnicianstechnicians=========================');
-        console.log(technicians);
-        console.log('====================================');
-        technicians.forEach(technician => {
+        tempTech.forEach(technician => {
             if (technician?.orders) {
                 technician?.orders.forEach(order => {
                     const exists = eventsList.some((e) => {
@@ -58,8 +55,12 @@ function TechnicianSchedule({ technicians, setTechnicians, data, setData }) {
                             extendedProps: {
                                 drivingTime: order.distanceDetails.duration.text,
                                 drivingDistance: order.distanceDetails.distance.text,
-                                TimeToComplete: order.order.TimeToComplete
-                                
+                                TimeToComplete: order.order.TimeToComplete,
+                                breakTime: breaktime(moment.duration({
+                                    hours: order.order.TimeToComplete,
+                                    seconds: order.distanceDetails.duration.value
+                                  }).asMinutes() / 120 * 15),
+                                location : order.order.location
                             }
                         })
                     }
@@ -69,17 +70,24 @@ function TechnicianSchedule({ technicians, setTechnicians, data, setData }) {
         setEvents(eventsList);
     }
 
+    function calculateLeftHours(tech){
+        var t = tempTech.filter(i => i.id == tech.id)[0]
+        return `No of Jobs : ${t.orders.length}` 
+    }
+
+    function breaktime (time){
+       return `${parseInt(time)} minutes`;
+    }
+
     function renderEventContent(eventInfo) {
-        // console.log('====================================');
-        // console.log(eventInfo);
-        // console.log('====================================');
         return (
             <>
-                <div className='text-center'>{eventInfo.event.title}</div>
+                <div className='text-center'><a target="_blank" href={`https://maps.google.com/?q=${eventInfo.event.extendedProps.location.lat},${eventInfo.event.extendedProps.location.lng}`}>{eventInfo.event.title}</a></div>
                 <div className='bg-blue-400 p-1'>
+                    <div className='text-xs'>Job hours : {eventInfo.event.extendedProps.TimeToComplete} Hour</div>
                     <div className='text-xs'>Driving Time : {eventInfo.event.extendedProps.drivingTime}</div>
                     <div className='text-xs'>Driving Distance : {eventInfo.event.extendedProps.drivingDistance}</div>
-                    <div className='text-xs'>Job hours : {eventInfo.event.extendedProps.TimeToComplete}</div>
+                    <div className='text-xs'>Break Time : {eventInfo.event.extendedProps.breakTime}</div>
                 </div>
             </>
         );
@@ -215,9 +223,6 @@ function TechnicianSchedule({ technicians, setTechnicians, data, setData }) {
 
                     if (orderDataAfter) {
                         var utech = tempTech.filter(i => i.id == tech.id);
-                        console.log('=========techhhhhhhhhhhhhhhhhhhhhhhhh===========================');
-                        console.log(tech, utech[0]);
-                        console.log('====================================');
                         initMap(orderLocation, orderDataAfter.location, orderDataAfter, utech[0]);
                     }
 
@@ -234,7 +239,6 @@ function TechnicianSchedule({ technicians, setTechnicians, data, setData }) {
 
 
     const handleUpdateTechnicianOrders = (id, newOrder) => {
-        //setTechnicians(technicians => {
         var orders = tempTech.map(technician => {
             if (technician.id === id) {
                 return { ...technician, orders: [...technician.orders, newOrder] };
@@ -242,14 +246,21 @@ function TechnicianSchedule({ technicians, setTechnicians, data, setData }) {
             return technician;
         });
 
-        console.log('===================orders=================');
-        console.log(orders);
-        console.log('====================================');
         tempTech = orders;
-
-        //console.log(orders, tempTechnicians);
-        //});
     };
+
+
+    const resourceRender = (info) => {
+        // customize the rendering of the resource here
+        const resourceEl = info.el;
+        const resource = info.resource;
+    
+        // update the resource template
+        const template = `
+          <div class="fc-resource-custom-field">${calculateLeftHours(resource)}</div>
+        `;
+        resourceEl.innerHTML = template;
+      };
 
 
     return (
@@ -272,14 +283,14 @@ function TechnicianSchedule({ technicians, setTechnicians, data, setData }) {
                     selectMirror={true}
                     dayMaxEvents={true}
                     allDaySlot={false}
-                    eventClick={(event) => alert(event.event.title)}
+                    eventClick={(event) => console.log(event.event.title)}
                     eventAdd={(event) => setEvents([...events, event.event.toPlainObject()])}
                     resourceLabelText="technician"
                     resourceAreaWidth="15%"
                     startEditable={false}
                     eventContent={renderEventContent}
                     eventDrop={handleEventDrop}
-
+                    
                     eventReceive={updateEvent}
                     ref={calendarRef}
                 />
@@ -293,13 +304,18 @@ function TechnicianSchedule({ technicians, setTechnicians, data, setData }) {
                 </p>
                 {data.map(event => (
                     !event.processed ?
-                        <div
-                            className="fc-event shadow-sm text-center bg-blue-500 rounded-sm text-white m-3 cursor-pointer"
+                       <div className='bg-blue-500 rounded-sm m-3' key={event.id} > <div
+                            className="fc-event shadow-sm text-center rounded-sm text-white cursor-pointer"
                             title={event.name}
                             data={event.id}
                             key={event.id}
                         >
-                            {event.name}
+                           <a target="_blank" href={`https://maps.google.com/?q=${event.location.lat},${event.location.lng}`}>{event.name}</a> 
+                        </div>
+                        <div className='bg-blue-400 p-1'>
+                        <div className='text-xs text-white'>Service On : {event.serviceOn}</div>
+                        <div className='text-xs text-white'>Time To Complete : {event.TimeToComplete} hours</div>
+                        </div>
                         </div>
                         : ''
                 ))}

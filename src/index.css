@@ -32,3 +32,9 @@
 .fc-resizer.fc-end-resizer {
   display: none;
 }
+
+td.fc-datagrid-cell.fc-resource {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-evenly;
+}

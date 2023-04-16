@@ -234,9 +234,6 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
       });
       const orderLocation = [orderItem.location];
       try {
-        console.log('================employeeLocations====================');
-        console.log(employeeLocations);
-        console.log('====================================');
         const empLocation = employeeLocations.filter(item => item !== undefined && item !== "");
         if (empLocation.length)
           await initMap(orderLocation, empLocation, orderItem );
@@ -246,10 +243,6 @@ const OrderList = ({ technicians, setTechnicians, data, setData }) => {
     }
 
     setTechnicians(tempTechnicians);
-
-    console.log('====================================');
-    console.log(tempTechnicians);
-    console.log('====================================');
    navigate('/TechnicianSchedule');
   };
 
