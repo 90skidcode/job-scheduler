@@ -9,6 +9,7 @@ import { order } from './assets/JSON/json';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import TechnicianSchedule from './TechnicianSchedule';
+import { calculateWorkingHoursBeforeApiCall, findClosestTimeIndex } from './CommonUtilsFunctions';
 const OrderList = ({ technicians, setTechnicians, data, setData }) => {
   let navigate = useNavigate();
 
@@ -240,28 +241,7 @@ function areTimeRangesOverlapping(time1, time2) {
   }
 
 
-  const calculateWorkingHoursBeforeApiCall = (technician, orderDetails) => {
-    var time = 0;
-    var drivingTime = 0;
-    // technician total working time for the day
-    var technicianWorkingTime = (parseFloat(technician.workingHours) * 60) * 60;
 
-    // Add current order time
-    time = (parseFloat(orderDetails.TimeToComplete) * 60) * 60;
-
-    // Adding already asiggned time
-    technician.orders.map(i => {
-      time += i.distanceDetails.duration.value;
-      time += (parseFloat(i.order.TimeToComplete) * 60) * 60;
-      drivingTime += i.distanceDetails.duration.value;
-    });
-
-    if (time <= technicianWorkingTime)
-      return true;
-    else
-      return false;
-
-  }
 
 
   function findLastLocation(technician, orderItem, index) {
@@ -291,21 +271,7 @@ function areTimeRangesOverlapping(time1, time2) {
     return locationData;
   }
 
-  function findClosestTimeIndex(times, targetTime){
-    let closestIndex = 0;
-    let closestDiff = Math.abs(moment(times[0]).diff(moment(targetTime)));
-    
-    for (let i = 1; i < times.length; i++) {
-      const diff = Math.abs(moment(times[i]).diff(moment(targetTime)));
-      if (diff < closestDiff) {
-        closestIndex = i;
-        closestDiff = diff;
-      }
-    }
-    
-    return closestIndex;
-    
-    }
+  
 
   const process = async () => {
     setLoader(true);
