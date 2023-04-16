@@ -82,7 +82,7 @@ function TechnicianSchedule({ technicians, setTechnicians, data, setData }) {
     function renderEventContent(eventInfo) {
         return (
             <>
-                <div className='text-center'><a target="_blank" href={`https://maps.google.com/?q=${eventInfo.event.extendedProps.location.lat},${eventInfo.event.extendedProps.location.lng}`}>{eventInfo.event.title}</a></div>
+                <div className='text-center'>{eventInfo.event.title}</div>
                 <div className='bg-blue-400 p-1'>
                     <div className='text-xs'>Job hours : {eventInfo.event.extendedProps.TimeToComplete} Hour</div>
                     <div className='text-xs'>Driving Time : {eventInfo.event.extendedProps.drivingTime}</div>
